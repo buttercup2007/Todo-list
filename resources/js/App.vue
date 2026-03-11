@@ -117,14 +117,17 @@ const toggleTodo = (id) => {
   <!-- Map (rechts) -->
   <div class="map">
 
-  <h1>maak een map:</h1>
-
+  <h1>maak een map</h1>
+     
+    <!-- Hier komt een test map-->
     <div class="map-container">
     
-    <!-- Hier komt een test map-->
-  
     </div>
-
+    <!-- Knop om een nieuwe map toe te voegen -->
+    
+    <button @click="maakMap" class="add-button2">
+          Toevoegen
+        </button>
   </div>
 
 </div>
