@@ -116,8 +116,12 @@ const toggleTodo = (id) => {
 
   <!-- Map (rechts) -->
   <div class="map">
-    <h1>Mappen</h1>
+    <h1>Maak een map:</h1>
   </div>
+
+  <div class="map container">
+    
+    <div/>
 
 </div>
 
@@ -150,8 +154,7 @@ body {
   overflow-y: auto;
   padding: 40px;
   box-sizing: border-box;
-  border-left: 2px solid #d6e7d4;
-  background-color: #f0faee;
+  box-sizing: border-box;
 }
 
 /* Todo app container */
