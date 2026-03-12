@@ -41,7 +41,8 @@ const addMap = () => {
     // Voeg nieuwe map toe aan de array
     maps.value.push({
       id: mapIdCounter.value++, // Geef een unieke ID
-      text: newMap.value         // Sla de map tekst op
+      text: newMap.value,       // Sla de map tekst op
+      completed: false          // Markeer als niet voltooid
     })
     // Reset het input veld
     newMap.value = ''
@@ -67,7 +68,18 @@ const toggleTodo = (id) => {
     todo.completed = !todo.completed
   }
 }
+
+// Functie om de completed status van een map te togglen
+const toggleMap = (id) => {
+  // Zoek de map en verander de completed status
+  const map = maps.value.find(map => map.id === id)
+  if (map) {
+    map.completed = !map.completed
+  }
+}
 </script>
+
+
 
 <template>
 
@@ -127,6 +139,7 @@ const toggleTodo = (id) => {
           <button @click="removeTodo(todo.id)"
             class="delete-button"> x </button>
 
+
         </li>
 
       </ul>
@@ -140,20 +153,23 @@ const toggleTodo = (id) => {
 
   </div>
 
+
+
+
+  <!-- DE MAP -->
+
   <!-- Map (rechts) -->
   <div class="map">
 
-  <!-- Hier komt een test map-->
+  <!-- Hier komt de titel-->
   <div class="map-container"></div>
+
+  <!-- hier komt de input -->
+  <div class="map-container2"></div>
 
   <h1>maak een map</h1>
 
-    <!-- Knop om een nieuwe map toe te voegen -->
-    <button @click="maakMap" class="add-button2">
-          Toevoegen
-        </button>
-    </div>
-
+  
    <!-- Input veld voor nieuwe map -->
      <input 
       v-model="newMap" 
@@ -162,11 +178,21 @@ const toggleTodo = (id) => {
       class="map-input"
       />
 
+    <!-- Knop om een nieuwe map toe te voegen -->
+    <button @click="maakMap" class="add-button">
+          Toevoegen
+        </button>
+    </div>
+    
+       <!-- Bericht als er geen mappen zijn -->
+      <p v-if="maps.length === 0" class="empty-message">
+        Geen Mappen
+      </p>
 
-
-</div>
+ </div>
 
 </template>
+
 <style>
 
 /* Algemene app styling */
@@ -197,25 +223,24 @@ body {
   box-sizing: border-box;
 }
 
-/* Map panel (rechts) */
-.map {
+/* map container2 */
+.map-container2 {
   overflow-y: auto;
   padding: 40px;
   box-sizing: border-box;
-  box-sizing: border-box;
 }
 
-/* Todo app container */
-.app {
-  width: 100%;
+/* Map panel (rechts) */
+.map {
+   width: 100%;
   margin: 0;
   padding: 30px;
   background-color: #f0faee;
   border-radius: 8px;
 }
- /*nieuwe map container */
 
-.map-container {
+/* Todo app container */
+.app {
   width: 100%;
   margin: 0;
   padding: 30px;
