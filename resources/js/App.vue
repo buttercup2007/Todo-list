@@ -5,11 +5,20 @@ import { ref } from 'vue'
 // Maak een reactieve variabele voor de nieuwe todo input
 const newTodo = ref('')
 
+// Maak een reactieve variabele voor de nieuwe map input
+const newMap = ref('')
+
 // Maak een reactieve array voor alle todos
 const todos = ref([])
 
+// Maak een reactieve array voor alle mappen
+const maps = ref([])
+
 // Maak een counter voor unieke todo IDs
 const todoIdCounter = ref(0)
+
+// Maak een counter voor unieke map IDs
+const mapIdCounter = ref(0)
 
 // Functie om een nieuwe todo toe te voegen
 const addTodo = () => {
@@ -26,10 +35,28 @@ const addTodo = () => {
   }
 }
 
-// Functie om een todo te verwijderen
+const addMap = () => {
+
+  if (newMap.value.trim() !== '') {
+    // Voeg nieuwe map toe aan de array
+    maps.value.push({
+      id: mapIdCounter.value++, // Geef een unieke ID
+      text: newMap.value         // Sla de map tekst op
+    })
+    // Reset het input veld
+    newMap.value = ''
+  }
+}
+
 const removeTodo = (id) => {
   // Filter de todo met het gegeven ID eruit
   todos.value = todos.value.filter(todo => todo.id !== id)
+}
+
+// Functie om een map te verwijderen
+const removeMap = (id) => {
+  // Filter de map met het gegeven ID eruit
+  maps.value = maps.value.filter(map => map.id !== id)
 }
 
 // Functie om de completed status van een todo te togglen
@@ -86,7 +113,7 @@ const toggleTodo = (id) => {
         >
 
           <!-- Checkbox om todo als voltooid te markeren -->
-          <input 
+          <input
             type="checkbox"
             :checked="todo.completed"
             @change="toggleTodo(todo.id)"
@@ -98,8 +125,7 @@ const toggleTodo = (id) => {
 
           <!-- Knop om een todo te verwijderen -->
           <button @click="removeTodo(todo.id)"
-            class="delete-button">
-          </button>
+            class="delete-button"> x </button>
 
         </li>
 
@@ -117,18 +143,26 @@ const toggleTodo = (id) => {
   <!-- Map (rechts) -->
   <div class="map">
 
+  <!-- Hier komt een test map-->
+  <div class="map-container"></div>
+
   <h1>maak een map</h1>
-     
-    <!-- Hier komt een test map-->
-    <div class="map-container">
-    
-    </div>
+
     <!-- Knop om een nieuwe map toe te voegen -->
-    
     <button @click="maakMap" class="add-button2">
           Toevoegen
         </button>
-  </div>
+    </div>
+
+   <!-- Input veld voor nieuwe map -->
+     <input 
+      v-model="newMap" 
+      @keyup.enter="addMap"
+      placeholder="Voeg een map toe"
+      class="map-input"
+      />
+
+
 
 </div>
 
@@ -151,6 +185,13 @@ body {
 
 /* Todo panel (links) */
 .todo-container {
+  overflow-y: auto;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+/* map container */
+.map-container {
   overflow-y: auto;
   padding: 40px;
   box-sizing: border-box;
