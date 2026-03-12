@@ -80,13 +80,11 @@ const toggleMap = (id) => {
 </script>
 
 
-
 <template>
 
 <!-- Hoofd layout die todo en map naast elkaar zet -->
 <div class="layout">
 
-  <!-- Todo lijst (links) -->
   <div class="todo-container">
 
     <!-- Hoofd container van de todo app -->
@@ -136,9 +134,12 @@ const toggleMap = (id) => {
           <span class="todo-text">{{ todo.text }}</span>
 
           <!-- Knop om een todo te verwijderen -->
-          <button @click="removeTodo(todo.id)"
-            class="delete-button"> x </button>
-
+          <button 
+            @click="removeTodo(todo.id)"
+            class="delete-button"
+          >
+            x
+          </button>
 
         </li>
 
@@ -153,43 +154,77 @@ const toggleMap = (id) => {
 
   </div>
 
-
-
-
-  <!-- DE MAP -->
-
-  <!-- Map (rechts) -->
+  <!--MAP -->
   <div class="map">
 
-  <!-- Hier komt de titel-->
-  <div class="map-container"></div>
+    <!-- Hoofd container van de map app -->
+    <div class="app">
 
-  <!-- hier komt de input -->
-  <div class="map-container2"></div>
+      <!-- Map titel -->
+      <h1>Maak een map</h1>
 
-  <h1>maak een map</h1>
+      <!-- Input sectie voor nieuwe mappen -->
+      <div class="input-section">
 
-  
-   <!-- Input veld voor nieuwe map -->
-     <input 
-      v-model="newMap" 
-      @keyup.enter="addMap"
-      placeholder="Voeg een map toe"
-      class="map-input"
-      />
+        <!-- Input veld voor nieuwe map -->
+        <input 
+          v-model="newMap" 
+          @keyup.enter="addMap"
+          placeholder="Naam van map..."
+          class="todo-input"
+        />
 
-    <!-- Knop om een nieuwe map toe te voegen -->
-    <button @click="maakMap" class="add-button">
+        <!-- Knop om een nieuwe map toe te voegen -->
+        <button @click="addMap" class="add-button">
           Toevoegen
         </button>
-    </div>
-    
-       <!-- Bericht als er geen mappen zijn -->
+
+      </div>
+
+      <!-- Lijst met mappen -->
+      <ul class="todo-list">
+
+        <!-- Loop door alle mappen -->
+        <li 
+          v-for="map in maps"
+          :key="map.id"
+          class="todo-item"
+          :class="{ completed: map.completed }"
+        >
+
+          <!-- Checkbox om map als voltooid te markeren -->
+          <input
+            type="checkbox"
+            :checked="map.completed"
+            @change="toggleMap(map.id)"
+            class="todo-checkbox"
+          />
+
+          <!-- Tekst van de map -->
+          <span class="todo-text">{{ map.text }}</span>
+
+          <!-- Knop om een map te verwijderen -->
+          <button 
+            @click="removeMap(map.id)"
+            class="delete-button"
+          >
+            x
+          </button>
+
+        </li>
+
+      </ul>
+
+      <!-- Bericht als er geen mappen zijn -->
       <p v-if="maps.length === 0" class="empty-message">
-        Geen Mappen
+        Geen mappen
       </p>
 
- </div>
+    </div>
+
+  </div>
+
+</div>
 
 </template>
 
@@ -206,6 +241,8 @@ body {
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 40px;
   height: 100vh;
 }
 
@@ -226,17 +263,16 @@ body {
 /* map container2 */
 .map-container2 {
   overflow-y: auto;
-  padding: 40px;
+  padding: 10px;
+  margin-top: 20px;
   box-sizing: border-box;
 }
 
 /* Map panel (rechts) */
 .map {
-   width: 100%;
-  margin: 0;
-  padding: 30px;
-  background-color: #f0faee;
-  border-radius: 8px;
+  overflow-y: auto;
+  padding: 40px;
+  box-sizing: border-box;
 }
 
 /* Todo app container */
