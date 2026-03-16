@@ -235,8 +235,14 @@ const dropTodo = (map) => {
 <style>
 
 @media (max-width: 900px) {
-  .maps-grid {
-    grid-template-columns: repeat(2, 1fr); /* 1 kolom op kleinere schermen */
+  .layout {
+    grid-template-columns: 1fr; /* 1 kolom op kleinere schermen */
+  }
+}
+
+@media (max-width: 500px) {
+  .todo-input, .add-button {  /* voor kleine scherm */
+    width: 100%;
   }
 }
 
@@ -255,7 +261,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 30px;
   padding: 40px;
   height: 100vh;
@@ -283,12 +289,13 @@ h1 {
 
 .input-section {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
 }
 
 .todo-input {
-  flex: 1;
+  flex: 1 1 200px;
   padding: 14px 18px;
   font-size: 18px;
   border: 2px solid #8f908f;
@@ -302,6 +309,7 @@ h1 {
 }
 
 .add-button {
+  flex: 0 0 auto;
   padding: 14px 22px;
   font-size: 18px;
   background-color: #5bba58;
@@ -373,7 +381,7 @@ h1 {
 
 .maps-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 kolommen */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 3 kolommen */
   gap: 20px; /* ruimte tussen de maps */
   padding: 0;
   list-style: none;
