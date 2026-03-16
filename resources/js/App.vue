@@ -77,6 +77,18 @@ const toggleMap = (id) => {
     map.completed = !map.completed
   }
 }
+
+const draggedTodo = ref(null)
+
+const startDrag = (todo) => {
+  draggedTodo.value = todo
+}
+
+const dropTodo = (map) => {
+  if (draggedTodo.value) {
+    console.log(`Todo "${draggedTodo.value.text}" gedropt op map "${map.text}"`)
+  }
+}
 </script>
 
 
@@ -120,6 +132,8 @@ const toggleMap = (id) => {
           :key="todo.id"
           class="todo-item"
           :class="{ completed: todo.completed }"
+          draggable="true"
+          @dragstart="startDrag(todo)"
         >
 
           <!-- Checkbox om todo als voltooid te markeren -->
@@ -190,6 +204,8 @@ const toggleMap = (id) => {
           :key="map.id"
           class="todo-item"
           :class="{ completed: map.completed }"
+          @dragover.prevent
+          @drop="dropTodo(map)"
         >
 
           <!-- Checkbox om map als voltooid te markeren -->
