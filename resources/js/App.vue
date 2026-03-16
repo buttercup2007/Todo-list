@@ -233,6 +233,20 @@ const dropTodo = (map) => {
 </template>
 
 <style>
+
+@media (max-width: 900px) {
+  .maps-grid {
+    grid-template-columns: repeat(2, 1fr); /* 1 kolom op kleinere schermen */
+  }
+}
+
+@media (max-width: 600px) {
+  .maps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 body {
   margin: 0;
   background: linear-gradient(#dafbbf, #a6f7c2, #a6f7f2);
@@ -355,5 +369,17 @@ h1 {
   font-size: 16px;
   border-radius: 4px;
   margin-bottom: 6px;
+}
+
+.maps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 kolommen */
+  gap: 20px; /* ruimte tussen de maps */
+  padding: 0;
+  list-style: none;
+}
+
+.maps-grid .todo-item {
+  margin: 0; /* geen extra margin onder de items */
 }
 </style>
