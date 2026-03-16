@@ -1,204 +1,176 @@
 <script setup>
-// Importeer ref voor reactieve state
+// Importeer ref voor reactieve state van Vue
 import { ref } from 'vue'
 
-// Maak een reactieve variabele voor de nieuwe todo input
+// Input veld voor nieuwe todo
 const newTodo = ref('')
 
-// Maak een reactieve variabele voor de nieuwe map input
+// Input veld voor nieuwe map
 const newMap = ref('')
 
-// Maak een reactieve array voor alle todos
+// Array met alle todos in de hoofd lijst
 const todos = ref([])
 
-// Maak een reactieve array voor alle mappen
+// Array met alle mappen
 const maps = ref([])
 
-// Maak een counter voor unieke todo IDs
+// Unieke ID teller voor todos
 const todoIdCounter = ref(0)
 
-// Maak een counter voor unieke map IDs
+// Unieke ID teller voor mappen
 const mapIdCounter = ref(0)
+
+// Huidig getrokken todo (voor drag & drop)
+const draggedTodo = ref(null)
+
+// Waar de todo vandaan komt (main list of map id)
+const draggedFromMap = ref(null)
 
 // Functie om een nieuwe todo toe te voegen
 const addTodo = () => {
-  // Check of de input niet leeg is
-  if (newTodo.value.trim() !== '') {
-    // Voeg nieuwe todo toe aan de array
-    todos.value.push({
-      id: todoIdCounter.value++, // Geef een unieke ID
-      text: newTodo.value,        // Sla de todo tekst op
-      completed: false            // Markeer als niet voltooid
-    })
-    // Reset het input veld
-    newTodo.value = ''
-  }
+  if (!newTodo.value.trim()) return
+  todos.value.push({
+  id: todoIdCounter.value++,
+  text: newTodo.value,
+  completed: false,
+  dragging: false // toegevoegde property
+})
+  newTodo.value = ''
 }
 
+// Functie om een nieuwe map toe te voegen
 const addMap = () => {
-
-  if (newMap.value.trim() !== '') {
-    // Voeg nieuwe map toe aan de array
-    maps.value.push({
-      id: mapIdCounter.value++, // Geef een unieke ID
-      text: newMap.value,       // Sla de map tekst op
-      completed: false          // Markeer als niet voltooid
-    })
-    // Reset het input veld
-    newMap.value = ''
-  }
+  if (!newMap.value.trim()) return
+  maps.value.push({
+    id: mapIdCounter.value++,
+    text: newMap.value,
+    completed: false,
+    todos: []
+  })
+  newMap.value = ''
 }
 
+// Verwijder todo uit hoofd lijst
 const removeTodo = (id) => {
-  // Filter de todo met het gegeven ID eruit
-  todos.value = todos.value.filter(todo => todo.id !== id)
+  todos.value = todos.value.filter(t => t.id !== id)
 }
 
-// Functie om een map te verwijderen
+// Verwijder map
 const removeMap = (id) => {
-  // Filter de map met het gegeven ID eruit
-  maps.value = maps.value.filter(map => map.id !== id)
+  maps.value = maps.value.filter(m => m.id !== id)
 }
 
-// Functie om de completed status van een todo te togglen
+// Toggle voltooid status van hoofd todo
 const toggleTodo = (id) => {
-  // Zoek de todo en verander de completed status
-  const todo = todos.value.find(todo => todo.id === id)
-  if (todo) {
-    todo.completed = !todo.completed
-  }
+  const todo = todos.value.find(t => t.id === id)
+  if (todo) todo.completed = !todo.completed
 }
 
-// Functie om de completed status van een map te togglen
+// Toggle voltooid status van map
 const toggleMap = (id) => {
-  // Zoek de map en verander de completed status
-  const map = maps.value.find(map => map.id === id)
-  if (map) {
-    map.completed = !map.completed
-  }
+  const map = maps.value.find(m => m.id === id)
+  if (map) map.completed = !map.completed
 }
 
-const draggedTodo = ref(null)
+// Toggle voltooid status van todo in map
+const toggleTodoInMap = (map, todo) => {
+  const t = map.todos.find(t => t.id === todo.id)
+  if (t) t.completed = !t.completed
+}
 
-const startDrag = (todo) => {
+// Start drag: sla de todo op en van waar deze komt
+const startDrag = (todo, event, fromMapId = null) => {
   draggedTodo.value = todo
+  draggedFromMap.value = fromMapId
+  todo.dragging = true // markeer als drag
+}
+const endDrag = (todo) => {
+  todo.dragging = false // verwijder drag markering
+  draggedTodo.value = null
+  draggedFromMap.value = null
 }
 
+// Drop functie: voeg todo toe aan map
 const dropTodo = (map) => {
-  if (draggedTodo.value) {
-    console.log(`Todo "${draggedTodo.value.text}" gedropt op map "${map.text}"`)
+  if (!draggedTodo.value) return
+
+  // Verwijder todo van waar deze vandaan kwam
+  if (draggedFromMap.value === null) {
+    todos.value = todos.value.filter(t => t.id !== draggedTodo.value.id)
+  } else {
+    const fromMap = maps.value.find(m => m.id === draggedFromMap.value)
+    if (fromMap) {
+      fromMap.todos = fromMap.todos.filter(t => t.id !== draggedTodo.value.id)
+    }
   }
+
+  // Voeg todo toe aan deze map
+  draggedTodo.value.dragging = false
+  map.todos.push(draggedTodo.value)
+
+  // Reset drag state
+  draggedTodo.value = null
+  draggedFromMap.value = null
 }
 </script>
 
-
 <template>
-
-<!-- Hoofd layout die todo en map naast elkaar zet -->
 <div class="layout">
 
   <div class="todo-container">
-
-    <!-- Hoofd container van de todo app -->
     <div class="app">
-
-      <!-- App titel -->
       <h1>To-Do List</h1>
 
-      <!-- Input sectie voor nieuwe todos -->
       <div class="input-section">
-
-        <!-- Input veld voor nieuwe todo -->
         <input 
           v-model="newTodo" 
           @keyup.enter="addTodo"
           placeholder="Voeg een taak toe..."
           class="todo-input"
         />
-
-        <!-- Knop om een nieuwe todo toe te voegen -->
-        <button @click="addTodo" class="add-button">
-          Toevoegen
-        </button>
-
+        <button @click="addTodo" class="add-button">Toevoegen</button>
       </div>
 
-      <!-- Lijst met todos -->
       <ul class="todo-list">
-
-        <!-- Loop door alle todos -->
         <li 
           v-for="todo in todos"
           :key="todo.id"
           class="todo-item"
-          :class="{ completed: todo.completed }"
+          :class="{ completed: todo.completed, dragging: todo.dragging }"
           draggable="true"
-          @dragstart="startDrag(todo)"
+          @dragstart="startDrag(todo, $event, null)"
+          @dragend="endDrag(todo)"
         >
-
-          <!-- Checkbox om todo als voltooid te markeren -->
           <input
             type="checkbox"
             :checked="todo.completed"
             @change="toggleTodo(todo.id)"
             class="todo-checkbox"
           />
-
-          <!-- Tekst van de todo -->
           <span class="todo-text">{{ todo.text }}</span>
-
-          <!-- Knop om een todo te verwijderen -->
-          <button 
-            @click="removeTodo(todo.id)"
-            class="delete-button"
-          >
-            x
-          </button>
-
+          <button @click="removeTodo(todo.id)" class="delete-button">x</button>
         </li>
-
       </ul>
 
-      <!-- Bericht als er geen taken zijn -->
-      <p v-if="todos.length === 0" class="empty-message">
-        Geen taken
-      </p>
-
+      <p v-if="todos.length === 0" class="empty-message">Geen taken</p>
     </div>
-
   </div>
 
-  <!--MAP -->
   <div class="map">
-
-    <!-- Hoofd container van de map app -->
     <div class="app">
-
-      <!-- Map titel -->
       <h1>Maak een map</h1>
 
-      <!-- Input sectie voor nieuwe mappen -->
       <div class="input-section">
-
-        <!-- Input veld voor nieuwe map -->
         <input 
           v-model="newMap" 
           @keyup.enter="addMap"
           placeholder="Naam van map..."
           class="todo-input"
         />
-
-        <!-- Knop om een nieuwe map toe te voegen -->
-        <button @click="addMap" class="add-button">
-          Toevoegen
-        </button>
-
+        <button @click="addMap" class="add-button">Toevoegen</button>
       </div>
 
-      <!-- Lijst met mappen -->
       <ul class="todo-list">
-
-        <!-- Loop door alle mappen -->
         <li 
           v-for="map in maps"
           :key="map.id"
@@ -207,53 +179,50 @@ const dropTodo = (map) => {
           @dragover.prevent
           @drop="dropTodo(map)"
         >
-
-          <!-- Checkbox om map als voltooid te markeren -->
+          <!-- Map naam + voltooid checkbox + delete -->
           <input
             type="checkbox"
             :checked="map.completed"
             @change="toggleMap(map.id)"
             class="todo-checkbox"
           />
-
-          <!-- Tekst van de map -->
           <span class="todo-text">{{ map.text }}</span>
+          <button @click="removeMap(map.id)" class="delete-button">x</button>
 
-          <!-- Knop om een map te verwijderen -->
-          <button 
-            @click="removeMap(map.id)"
-            class="delete-button"
-          >
-            x
-          </button>
-
+          <!-- TODOS BINNEN DE MAP TONEN -->
+          <ul class="map-todos">
+            <li 
+              v-for="todo in map.todos" 
+              :key="todo.id" 
+              class="todo-item small"
+              draggable="true"
+              @dragstart="startDrag(todo, $event, map.id)"
+            >
+              <input
+                type="checkbox"
+                :checked="todo.completed"
+                @change="toggleTodoInMap(map, todo)"
+                class="todo-checkbox"
+              />
+              <span class="todo-text">{{ todo.text }}</span>
+            </li>
+          </ul>
         </li>
-
       </ul>
 
-      <!-- Bericht als er geen mappen zijn -->
-      <p v-if="maps.length === 0" class="empty-message">
-        Geen mappen
-      </p>
-
+      <p v-if="maps.length === 0" class="empty-message">Geen mappen</p>
     </div>
-
   </div>
-
 </div>
-
 </template>
 
 <style>
-
-/* Algemene app styling */
 body {
   margin: 0;
   background: linear-gradient(#dafbbf, #a6f7c2, #a6f7f2);
   font-family: Arial, sans-serif;
 }
 
-/* Main layout: todo links, map rechts */
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -262,62 +231,32 @@ body {
   height: 100vh;
 }
 
-/* Todo panel (links) */
-.todo-container {
+.todo-container, .map {
   overflow-y: auto;
   padding: 40px;
   box-sizing: border-box;
 }
 
-/* map container */
-.map-container {
-  overflow-y: auto;
-  padding: 40px;
-  box-sizing: border-box;
-}
-
-/* map container2 */
-.map-container2 {
-  overflow-y: auto;
-  padding: 10px;
-  margin-top: 20px;
-  box-sizing: border-box;
-}
-
-/* Map panel (rechts) */
-.map {
-  overflow-y: auto;
-  padding: 40px;
-  box-sizing: border-box;
-}
-
-/* Todo app container */
 .app {
   width: 100%;
-  margin: 0;
   padding: 30px;
   background-color: #f0faee;
   border-radius: 8px;
 }
 
-/* Titel styling */
 h1 {
   text-align: center;
-  color: #000000;
   margin-bottom: 30px;
-  font-family: 'Google Sans', sans-serif;
   font-weight: 400;
   font-size: 36px;
 }
 
-/* Input sectie styling */
 .input-section {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-/* Todo input veld */
 .todo-input {
   flex: 1;
   padding: 14px 18px;
@@ -326,15 +265,12 @@ h1 {
   border-radius: 5px;
   outline: none;
   background-color: #fdffff;
-  color: #000000;
 }
 
-/* Focus state input */
 .todo-input:focus {
   border-color: #5fc466;
 }
 
-/* Toevoegen knop */
 .add-button {
   padding: 14px 22px;
   font-size: 18px;
@@ -345,19 +281,13 @@ h1 {
   cursor: pointer;
   transition: background-color 0.3s;
 }
+.add-button:hover { background-color: #30653b; }
 
-/* Hover toevoegen knop */
-.add-button:hover {
-  background-color: #30653b;
-}
-
-/* Todo lijst */
 .todo-list {
   list-style: none;
   padding: 0;
 }
 
-/* Todo item */
 .todo-item {
   display: flex;
   align-items: center;
@@ -366,33 +296,22 @@ h1 {
   background-color: #ffffff;
   border-radius: 6px;
   transition: background-color 0.2s;
-  color: #000000;
   font-size: 18px;
 }
+.todo-item:hover { background-color: #f5fff5; }
 
-/* Hover todo */
-.todo-item:hover {
-  background-color: #f5fff5;
+.todo-item.completed .todo-text { text-decoration: line-through; }
+
+.todo-item.dragging {
+  opacity: 0.8;            /* licht transparant */
+  transform: scale(1.05);  /* iets groter */
+  border: 2px dashed #5bba58; /* highlight border */
+  background-color: #e0ffe0;
 }
 
-/* Voltooide todo */
-.todo-item.completed .todo-text {
-  text-decoration: line-through;
-  color: #000000;
-}
+.todo-checkbox { margin-right: 12px; cursor: pointer; }
+.todo-text { flex: 1; }
 
-/* Checkbox */
-.todo-checkbox {
-  margin-right: 12px;
-  cursor: pointer;
-}
-
-/* Todo tekst */
-.todo-text {
-  flex: 1;
-}
-
-/* Verwijder knop */
 .delete-button {
   padding: 6px 12px;
   font-size: 20px;
@@ -401,20 +320,24 @@ h1 {
   border: none;
   border-radius: 3px;
   cursor: pointer;
-  transition: background-color 0.3s;
+}
+.delete-button:hover { background-color: #2d5b2c; }
+
+.empty-message { text-align: center; font-style: italic; margin-top: 30px; }
+
+/* TODOS BINNEN MAPS */
+.map-todos {
+  list-style: none;
+  padding-left: 20px;
+  margin-top: 10px;
 }
 
-/* Hover verwijder knop */
-.delete-button:hover {
-  background-color: #2d5b2c;
+.map-todos .todo-item.small {
+  background-color: #c2f0c2;
+  border-left: 4px solid #5bba58;
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  margin-bottom: 6px;
 }
-
-/* Lege lijst bericht */
-.empty-message {
-  text-align: center;
-  color: #000000;
-  font-style: italic;
-  margin-top: 30px;
-}
-
 </style>
