@@ -82,7 +82,23 @@ const toggleTodoInMap = (map, todo) => {
 const startDrag = (todo, event, fromMapId = null) => {
   draggedTodo.value = todo
   draggedFromMap.value = fromMapId
-  todo.dragging = true // markeer als drag
+  todo.dragging = true
+
+  // Maak een clone van het element voor de drag image
+  const dragGhost = event.target.cloneNode(true)
+  dragGhost.style.opacity = '1'           // volledig zichtbaar
+  dragGhost.style.position = 'absolute'   // positioneer correct
+  dragGhost.style.top = '-1000px'         // uit het zicht
+  dragGhost.style.left = '-1000px'
+  document.body.appendChild(dragGhost)
+
+  // Gebruik de clone als drag image
+  event.dataTransfer.setDragImage(dragGhost, 0, 0)
+
+  // Verwijder de clone na korte tijd zodat het DOM niet volloopt
+  setTimeout(() => {
+    document.body.removeChild(dragGhost)
+  }, 0)
 }
 const endDrag = (todo) => {
   todo.dragging = false // verwijder drag markering
@@ -170,7 +186,7 @@ const dropTodo = (map) => {
         <button @click="addMap" class="add-button">Toevoegen</button>
       </div>
 
-      <ul class="todo-list">
+      <ul class="todo-list maps-grid">
         <li 
           v-for="map in maps"
           :key="map.id"
@@ -298,15 +314,15 @@ h1 {
   transition: background-color 0.2s;
   font-size: 18px;
 }
-.todo-item:hover { background-color: #f5fff5; }
+.todo-item:hover { background-color: #ffffff; }
 
 .todo-item.completed .todo-text { text-decoration: line-through; }
 
 .todo-item.dragging {
-  opacity: 0.8;            /* licht transparant */
-  transform: scale(1.05);  /* iets groter */
-  border: 2px dashed #5bba58; /* highlight border */
-  background-color: #e0ffe0;
+  opacity: 1;            /* licht transparant */
+  transform: none;           /* geen verschuiving */
+  border: 2px dashed #cdd4cd; /* highlight border */
+  background-color: #cdd4cd;
 }
 
 .todo-checkbox { margin-right: 12px; cursor: pointer; }
@@ -333,8 +349,8 @@ h1 {
 }
 
 .map-todos .todo-item.small {
-  background-color: #c2f0c2;
-  border-left: 4px solid #5bba58;
+  background-color: #cdd4cd;
+  border-left: 4px solid #d2d8d2;
   padding: 8px 12px;
   font-size: 16px;
   border-radius: 4px;
