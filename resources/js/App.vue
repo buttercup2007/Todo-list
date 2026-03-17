@@ -131,9 +131,23 @@ const dropTodo = (map) => {
 
 const dropOnList = (event, index) => {
   const dragged = draggedTodo.value
+  if (!dragged) return
 
-  todos.value = todos.value.filter(t => t.id !== dragged.id)
+  //verwijder uit originele plek
+  if (draggedFromMap.value === null) {
+    todos.value = todos.value.filter(t => t.id !== dragged.id)
+  } else {
+    const fromMap = maps.value.find(m => m.id === draggedFromMap.value)
+    if (fromMap) {
+      fromMap.todos = fromMap.todos.filter(t => t.id !== dragged.id)
+    }
+  }
+
+  // voeg toe op nieuwe plek
   todos.value.splice(index, 0, dragged)
+
+  draggedTodo.value = null
+  draggedFromMap.value = null
 }
 
 const saveTodos =() => {
