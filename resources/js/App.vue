@@ -2,7 +2,10 @@
 // Importeer ref voor reactieve state van Vue
 import { ref } from 'vue'
 
-// Input veld voor nieuwe todo
+// Importeer axios voor API calls
+import axios from "axios";
+
+// Input veld voor nieuwe todoa
 const newTodo = ref('')
 
 // Input veld voor nieuwe map
