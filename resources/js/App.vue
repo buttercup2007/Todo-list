@@ -5,7 +5,7 @@ import { ref } from 'vue'
 // Importeer axios voor API calls
 import axios from "axios";
 
-// Input veld voor nieuwe todoa
+// Input veld voor nieuwe todo
 const newTodo = ref('')
 
 // Input veld voor nieuwe map
@@ -32,6 +32,7 @@ const draggedFromMap = ref(null)
 // Functie om een nieuwe todo toe te voegen
 const addTodo = () => {
   if (!newTodo.value.trim()) return
+
   todos.value.push({
   id: todoIdCounter.value++,
   text: newTodo.value,
@@ -39,6 +40,8 @@ const addTodo = () => {
   dragging: false // toegevoegde property
 })
   newTodo.value = ''
+
+  saveTodos() // Sla de nieuwe todo op na toevoegen
 }
 
 // Functie om een nieuwe map toe te voegen
@@ -51,16 +54,21 @@ const addMap = () => {
     todos: []
   })
   newMap.value = ''
+
+  saveTodos() // Sla de nieuwe map op na toevoegen
 }
 
 // Verwijder todo uit hoofd lijst
 const removeTodo = (id) => {
   todos.value = todos.value.filter(t => t.id !== id)
+  
+  saveTodos() // Sla de nieuwe todo lijst op na verwijderen
 }
 
 // Verwijder map
 const removeMap = (id) => {
   maps.value = maps.value.filter(m => m.id !== id)
+  saveTodos() // Sla de nieuwe map lijst op na verwijderen
 }
 
 // Toggle voltooid status van hoofd todo
@@ -130,6 +138,8 @@ const dropTodo = (map) => {
   // Reset drag state
   draggedTodo.value = null
   draggedFromMap.value = null
+
+  saveTodos() // Sla de nieuwe map + todo op na drop
 }
 
 const dropOnList = (event, index) => {
@@ -151,6 +161,8 @@ const dropOnList = (event, index) => {
 
   draggedTodo.value = null
   draggedFromMap.value = null
+
+  saveTodos() // Sla de nieuwe todo lijst op na drop
 }
 
 const saveTodos =() => {
