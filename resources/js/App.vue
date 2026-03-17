@@ -128,6 +128,20 @@ const dropTodo = (map) => {
   draggedTodo.value = null
   draggedFromMap.value = null
 }
+
+const dropOnList = (event, index) => {
+  const dragged = draggedTodo.value
+
+  todos.value = todos.value.filter(t => t.id !== dragged.id)
+  todos.value.splice(index, 0, dragged)
+}
+
+const saveTodos =() => {
+  axios.post('/api/todos/save', {
+    todos: todos.value,
+    maps: maps.value
+  })
+}
 </script>
 
 <template>
@@ -149,13 +163,15 @@ const dropTodo = (map) => {
 
       <ul class="todo-list">
         <li 
-          v-for="todo in todos"
+          v-for="(todo, index) in todos"
           :key="todo.id"
           class="todo-item"
           :class="{ completed: todo.completed, dragging: todo.dragging }"
           draggable="true"
           @dragstart="startDrag(todo, $event, null)"
           @dragend="endDrag(todo)"
+          @drop="dropOnList($event, index)"
+          @dragover.prevent
         >
           <input
             type="checkbox"
@@ -205,7 +221,7 @@ const dropTodo = (map) => {
           <span class="todo-text">{{ map.text }}</span>
           <button @click="removeMap(map.id)" class="delete-button">x</button>
 
-          <!-- TODOS BINNEN DE MAP TONEN -->
+          <!-- todos binnen de map tonen -->
           <ul class="map-todos">
             <li 
               v-for="todo in map.todos" 
