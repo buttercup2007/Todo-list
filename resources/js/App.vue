@@ -52,7 +52,7 @@ const addMap = () => {
     text: newMap.value,
     completed: false,
     todos: []
-  })
+  })                
   newMap.value = ''
 
   saveTodos() // Sla de nieuwe map op na toevoegen
