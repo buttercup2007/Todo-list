@@ -186,6 +186,8 @@ const saveTodos =() => {
           @keyup.enter="addTodo"
           placeholder="Voeg een taak toe..."
           class="todo-input"
+          id ="new-Todo"
+          name="newTodo"
         />
         <button @click="addTodo" class="add-button">Toevoegen</button>
       </div>
@@ -202,12 +204,17 @@ const saveTodos =() => {
           @drop="dropOnList($event, index)"
           @dragover.prevent
         >
+        <label :for="'todo-' + todo.id">
           <input
             type="checkbox"
             :checked="todo.completed"
             @change="toggleTodo(todo.id)"
             class="todo-checkbox"
+            :id="'map-todo-' + todo.id"
+            name="mapTodoCheckbox"
           />
+          </label>
+          
           <span class="todo-text">{{ todo.text }}</span>
           <button @click="removeTodo(todo.id)" class="delete-button">x</button>
         </li>
@@ -227,6 +234,8 @@ const saveTodos =() => {
           @keyup.enter="addMap"
           placeholder="Naam van map..."
           class="todo-input"
+          id="new-Map"
+          name="newMap"
         />
         <button @click="addMap" class="add-button">Toevoegen</button>
       </div>
@@ -246,6 +255,7 @@ const saveTodos =() => {
             :checked="map.completed"
             @change="toggleMap(map.id)"
             class="todo-checkbox"
+            
           />
           <span class="todo-text">{{ map.text }}</span>
           <button @click="removeMap(map.id)" class="delete-button">x</button>
