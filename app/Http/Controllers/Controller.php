@@ -2,19 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-class TodoController extends Controller
+class Controller extends BaseController
 {
-    public function save(Request $request)
-    {
-        // Voor nu loggen we alles
-        \Log::info($request->all());
-
-        // Geef een JSON terug
-        return response()->json([
-            'status' => 'success',
-            'data' => $request->all()
-        ]);
-    }
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 }
