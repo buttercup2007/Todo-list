@@ -18,6 +18,8 @@ const saving = ref(false)  // Opslaan status
 
 // Laad todos en mappen van de server bij component mount
 const loadTodos = async () => {
+  const start = Date.now()
+
   try {
     const response = await axios.get('/api/todos')
     todos.value = response.data.todos || []
@@ -25,7 +27,12 @@ const loadTodos = async () => {
   } catch (error) {
     console.error('Laden mislukt', error)
   } finally {
-    loading.value = false
+    const elapsed = Date.now() - start
+    const delay = Math.max(500 - elapsed, 0)
+
+    setTimeout(() => {
+      loading.value = false
+    }, delay)
   }
 }
 
@@ -33,6 +40,7 @@ onMounted(loadTodos)  // Laad todos bij component mount
 
 // save met debounce
 let saveTimeout = null
+let savingTimeout = null
 
 const saveTodos = () => {
   clearTimeout(saveTimeout)
@@ -40,16 +48,22 @@ const saveTodos = () => {
   saveTimeout = setTimeout(async () => {
     try {
       saving.value = true
+
       await axios.post('/api/todos/save', {
         todos: todos.value,
         maps: maps.value
       })
+
+      clearTimeout(savingTimeout)
+      savingTimeout = setTimeout(() => {
+        saving.value = false
+      }, 500)
+
     } catch (error) {
       console.error('Opslaan mislukt', error)
-    } finally {
       saving.value = false
     }
-  }, 500) // wacht 0.5s
+  }, 500)
 }
 
 //auto save
@@ -180,133 +194,124 @@ const resetDrag = () => {
 </script>
 
 <template>
-
-<transition name="fade">
-<div v-if="saving" class="loading">
-  Opslaan...
-</div>
-</transition>
-
-<transition name="fade">
-<div v-if="loading" class="loading">
-   Bezig met laden...
-</div>
-</transition>
-
-<div v-else class="layout">
-
-  <div class="todo-container">
-    <div class="app">
-      <h1>To-Do List</h1>
-
-      <div class="input-section">
-        <input 
-          ref="todoInput"
-          v-model="newTodo" 
-          @keyup.enter="addTodo"
-          placeholder="Voeg een taak toe..."
-          class="todo-input"
-          id ="new-Todo"
-          name="newTodo"
-        />
-        <button @click="addTodo" class="add-button">Toevoegen</button>
-      </div>
-
-      <ul class="todo-list" @dragover.prevent @drop="dropOnList()">
-        <li 
-          v-for="(todo, index) in todos"
-          :key="todo.id"
-          class="todo-item"
-          :class="{ completed: todo.completed, dragging: todo.dragging }"
-          draggable="true"
-          @dragstart="startDrag(todo, $event, null)"
-          @dragend="endDrag(todo)"
-          @drop="dropOnList(index)"
-          @dragover.prevent
-        >
-        <label :for="'todo-' + todo.id">
-          <input
-            type="checkbox"
-            :checked="todo.completed"
-            @change="toggleTodo(todo.id)"
-            class="todo-checkbox"
-            :id="'todo-' + todo.id"
-            name="mapTodoCheckbox"
-          />
-          </label>
-
-          <span class="todo-text">{{ todo.text }}</span>
-          <button @click="removeTodo(todo.id)" class="delete-button">x</button>
-        </li>
-      </ul>
-
-      <p v-if="todos.length === 0" class="empty-message">Geen taken</p>
+  <!-- Overlay voor loading of saving -->
+  <transition name="fade">
+    <div v-if="loading || saving" class="loading">
+      {{ saving ? ' Opslaan...' : 'Bezig met laden...' }}
     </div>
-  </div>
+  </transition>
 
-  <div class="map">
-    <div class="app">
-      <h1>Maak een map</h1>
+  <!-- Hoofd layout -->
+  <div v-show="!loading && !saving" class="layout">
 
-      <div class="input-section">
-        <input 
-          v-model="newMap" 
-          @keyup.enter="addMap"
-          placeholder="Naam van map..."
-          class="todo-input"
-          id="new-Map"
-          name="newMap"
-        />
-        <button @click="addMap" class="add-button">Toevoegen</button>
-      </div>
+    <div class="todo-container">
+      <div class="app">
+        <h1>To-Do List</h1>
 
-      <ul class="todo-list maps-grid">
-        <li 
-          v-for="map in maps"
-          :key="map.id"
-          class="todo-item"
-          :class="{ completed: map.completed }"
-          @dragover.prevent
-          @drop="dropTodo(map)"
-        >
-          <!-- Map naam + voltooid checkbox + delete -->
-          <input
-            type="checkbox"
-            :checked="map.completed"
-            @change="toggleMap(map.id)"
-            class="todo-checkbox"
-            
+        <div class="input-section">
+          <input 
+            ref="todoInput"
+            v-model="newTodo" 
+            @keyup.enter="addTodo"
+            placeholder="Voeg een taak toe..."
+            class="todo-input"
+            id ="new-Todo"
+            name="newTodo"
           />
-          <span class="todo-text">{{ map.text }}</span>
-          <button @click="removeMap(map.id)" class="delete-button">x</button>
+          <button @click="addTodo" class="add-button">Toevoegen</button>
+        </div>
 
-          <!-- todos binnen de map tonen -->
-          <ul class="map-todos">
-            <li 
-              v-for="todo in map.todos" 
-              :key="todo.id" 
-              class="todo-item small"
-              draggable="true"
-              @dragstart="startDrag(todo, $event, map.id)"
-            >
+        <ul class="todo-list" @dragover.prevent @drop="dropOnList()">
+          <li 
+            v-for="(todo, index) in todos"
+            :key="todo.id"
+            class="todo-item"
+            :class="{ completed: todo.completed, dragging: todo.dragging }"
+            draggable="true"
+            @dragstart="startDrag(todo, $event, null)"
+            @dragend="endDrag(todo)"
+            @drop="dropOnList(index)"
+            @dragover.prevent
+          >
+            <label :for="'todo-' + todo.id">
               <input
                 type="checkbox"
                 :checked="todo.completed"
-                @change="toggleTodoInMap(map, todo)"
+                @change="toggleTodo(todo.id)"
                 class="todo-checkbox"
+                :id="'todo-' + todo.id"
+                name="mapTodoCheckbox"
               />
-              <span class="todo-text">{{ todo.text }}</span>
-            </li>
-          </ul>
-        </li>
-      </ul>
+            </label>
 
-      <p v-if="maps.length === 0" class="empty-message">Geen mappen</p>
+            <span class="todo-text">{{ todo.text }}</span>
+            <button @click="removeTodo(todo.id)" class="delete-button">x</button>
+          </li>
+        </ul>
+
+        <p v-if="todos.length === 0" class="empty-message">Geen taken</p>
+      </div>
     </div>
-  </div>
-</div>
 
-<!--delete button voor slepen task naar map-->
+    <div class="map">
+      <div class="app">
+        <h1>Maak een map</h1>
+
+        <div class="input-section">
+          <input 
+            v-model="newMap" 
+            @keyup.enter="addMap"
+            placeholder="Naam van map..."
+            class="todo-input"
+            id="new-Map"
+            name="newMap"
+          />
+          <button @click="addMap" class="add-button">Toevoegen</button>
+        </div>
+
+        <ul class="todo-list maps-grid">
+          <li 
+            v-for="map in maps"
+            :key="map.id"
+            class="todo-item"
+            :class="{ completed: map.completed }"
+            @dragover.prevent
+            @drop="dropTodo(map)"
+          >
+            <input
+              type="checkbox"
+              :checked="map.completed"
+              @change="toggleMap(map.id)"
+              class="todo-checkbox"
+            />
+            <span class="todo-text">{{ map.text }}</span>
+            <button @click="removeMap(map.id)" class="delete-button">x</button>
+
+            <ul class="map-todos">
+              <li 
+                v-for="todo in map.todos" 
+                :key="todo.id" 
+                class="todo-item small"
+                draggable="true"
+                @dragstart="startDrag(todo, $event, map.id)"
+              >
+                <input
+                  type="checkbox"
+                  :checked="todo.completed"
+                  @change="toggleTodoInMap(map, todo)"
+                  class="todo-checkbox"
+                />
+                <span class="todo-text">{{ todo.text }}</span>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p v-if="maps.length === 0" class="empty-message">Geen mappen</p>
+      </div>
+    </div>
+
+  </div>
 </template>
 
 <style>
@@ -474,10 +479,4 @@ h1 {
   margin-top: 100px;
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
 </style>
