@@ -178,7 +178,13 @@ const resetDrag = () => {
 </script>
 
 <template>
-<div v-if="loading">Loading...</div>
+<div v-if="saving" class="loading">
+  Opslaan...
+</div>
+
+<div v-if="loading" class="loading">
+   Bezig met laden...
+</div>
 
 <div v-else class="layout">
 
