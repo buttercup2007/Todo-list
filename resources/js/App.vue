@@ -1,24 +1,18 @@
 <script setup>
 
-import { ref } from 'vue'  // Importeer ref voor reactieve state van Vue
+import { ref, onMounted, watch } from 'vue'  // Importeer ref voor reactieve state van Vue
 import axios from "axios";  // Importeer axios voor API calls
-import { onMounted } from 'vue'  // Importeer onMounted voor lifecycle hook
-import { watch } from 'vue'  // Importeer watch voor het automatisch opslaan van wijzigingen
 
 const newTodo = ref('')  // Input veld voor nieuwe todo
 const newMap = ref('')  // Input veld voor nieuwe map
 const todos = ref([])  // Array met alle todos in de hoofd lijst
 const maps = ref([])  // Array met alle mappen
 
-const todoIdCounter = ref(0)  // Unieke ID teller voor todos
-const mapIdCounter = ref(0)  // Unieke ID teller voor mappen
 const draggedTodo = ref(null)  // Huidig getrokken todo (voor drag & drop)
 const draggedFromMap = ref(null)  // Waar de todo vandaan komt (main list of map id)
 
-// Watcher om automatisch op te slaan bij wijzigingen in todos of maps
-watch([todos, maps], () => {
-  saveTodos()
-}, { deep: true })
+const loading = ref(true)  // Laad status
+consy saving = ref(false)  // Opslaan status
 
 // Laad todos en mappen van de server bij component mount
 const loadTodos = async () => {
@@ -28,126 +22,141 @@ const loadTodos = async () => {
     maps.value = response.data.maps || []
   } catch (error) {
     console.error('Laden mislukt', error)
+  } finally {
+    loading.value = false
   }
 }
 
-onMounted(() => {
-  loadTodos()
-})
+onMounted(loadTodos)  // Laad todos bij component mount
 
-const saveTodos = async () => {
-  try {
-    await axios.post('/api/todos/save', {
-      todos: todos.value,
-      maps: maps.value
-    })
-  } catch (error) {
-    console.error('Opslaan mislukt', error)
-  }
+// save met debounce
+let saveTimeout = null
+
+const saveTodos = () => {
+  clearTimeout(saveTimeout)
+
+  saveTimeout = setTimeout(async () => {
+    try {
+      saving.value = true
+      await axios.post('/api/todos/save', {
+        todos: todos.value,
+        maps: maps.value
+      })
+    } catch (error) {
+      console.error('Opslaan mislukt', error)
+    } finally {
+      saving.value = false
+    }
+  }, 500) // wacht 0.5s
 }
 
-// Functie om een nieuwe todo toe te voegen
+//auto save
+watch([todos, maps], saveTodos, { deep: true }) // watch voor veranderingen in todos en maps
+
+// add todo
 const addTodo = () => {
   if (!newTodo.value.trim()) return
 
   todos.value.push({
-  id: todoIdCounter.value++,
-  text: newTodo.value,
-  completed: false,
-  dragging: false // toegevoegde property
-})
-  newTodo.value = ''
+    id: Date.now(), // tijdelijke ID (backend moet echte geven)
+    text: newTodo.value,
+    completed: false,
+    dragging: false
+  })
 
-  saveTodos() // Sla de nieuwe todo op na toevoegen
+  newTodo.value = ''
 }
 
-// Functie om een nieuwe map toe te voegen
+//add map
 const addMap = () => {
   if (!newMap.value.trim()) return
+
   maps.value.push({
-    id: mapIdCounter.value++,
+    id: Date.now(),
     text: newMap.value,
     completed: false,
     todos: []
-  })                
-  newMap.value = ''
+  })
 
-  saveTodos() // Sla de nieuwe map op na toevoegen
+  newMap.value = ''
 }
 
-// Verwijder todo uit hoofd lijst
+// verwijderen
 const removeTodo = (id) => {
   todos.value = todos.value.filter(t => t.id !== id)
-  
-  saveTodos() // Sla de nieuwe todo lijst op na verwijderen
 }
 
-// Verwijder map
 const removeMap = (id) => {
   maps.value = maps.value.filter(m => m.id !== id)
-  saveTodos() // Sla de nieuwe map lijst op na verwijderen
 }
 
-// Toggle voltooid status van hoofd todo
+//toggle
 const toggleTodo = (id) => {
   const todo = todos.value.find(t => t.id === id)
-  if (todo) {
-    todo.completed = !todo.completed
-    saveTodos() // Sla de nieuwe todo lijst op na toggle
-  }
+  if (todo) todo.completed = !todo.completed
 }
 
-// Toggle voltooid status van map
 const toggleMap = (id) => {
   const map = maps.value.find(m => m.id === id)
-  if (map) {
-   map.completed = !map.completed
-   saveTodos() // Sla de nieuwe map lijst op na toggle
-  }
+  if (map) map.completed = !map.completed
 }
 
-// Toggle voltooid status van todo in map
 const toggleTodoInMap = (map, todo) => {
   const t = map.todos.find(t => t.id === todo.id)
-  if (t) {
-    t.completed = !t.completed
-    saveTodos() // Sla de nieuwe todo lijst op na toggle
-  }
+  if (t) t.completed = !t.completed
 }
 
-// Start drag: sla de todo op en van waar deze komt
+// drag
 const startDrag = (todo, event, fromMapId = null) => {
   draggedTodo.value = todo
   draggedFromMap.value = fromMapId
   todo.dragging = true
 
-  // Maak een clone van het element voor de drag image
-  const dragGhost = event.target.cloneNode(true)
-  dragGhost.style.opacity = '1'           // volledig zichtbaar
-  dragGhost.style.position = 'absolute'   // positioneer correct
-  dragGhost.style.top = '-1000px'         // uit het zicht
-  dragGhost.style.left = '-1000px'
-  document.body.appendChild(dragGhost)
+  const ghost = event.target.cloneNode(true)
+  ghost.style.position = 'absolute'
+  ghost.style.top = '-1000px'
+  document.body.appendChild(ghost)
 
-  // Gebruik de clone als drag image
-  event.dataTransfer.setDragImage(dragGhost, 0, 0)
+  event.dataTransfer.setDragImage(ghost, 0, 0)
 
-  // Verwijder de clone na korte tijd zodat het DOM niet volloopt
-  setTimeout(() => {
-    document.body.removeChild(dragGhost)
-  }, 0)
+  setTimeout(() => document.body.removeChild(ghost), 0)
 }
+
 const endDrag = (todo) => {
-  todo.dragging = false // verwijder drag markering
+  todo.dragging = false
   draggedTodo.value = null
   draggedFromMap.value = null
 }
 
-// Drop functie: voeg todo toe aan map
+// drop in map
 const dropTodo = (map) => {
   if (!draggedTodo.value) return
 
-  // Verwijder todo van waar deze vandaan kwam
+  removeFromOldPlace()
+
+  draggedTodo.value.dragging = false
+  map.todos.push(draggedTodo.value)
+
+  resetDrag()
+}
+
+// drop naar lijst
+const dropOnList = (index = null) => {
+  if (!draggedTodo.value) return
+
+  removeFromOldPlace()
+
+  if (index === null) {
+    todos.value.push(draggedTodo.value)
+  } else {
+    todos.value.splice(index, 0, draggedTodo.value)
+  }
+
+  resetDrag()
+}
+
+// helpers
+const removeFromOldPlace = () => {
   if (draggedFromMap.value === null) {
     todos.value = todos.value.filter(t => t.id !== draggedTodo.value.id)
   } else {
@@ -156,58 +165,9 @@ const dropTodo = (map) => {
       fromMap.todos = fromMap.todos.filter(t => t.id !== draggedTodo.value.id)
     }
   }
-
-  // Voeg todo toe aan deze map
-  draggedTodo.value.dragging = false
-  map.todos.push(draggedTodo.value)
-
-  // Reset drag state
-  draggedTodo.value = null
-  draggedFromMap.value = null
-
-  saveTodos() // Sla de nieuwe map + todo op na drop
 }
 
-const dropOnList = (event, index) => {
-  const dragged = draggedTodo.value
-  if (!dragged) return
-
-  //verwijder uit originele plek
-  if (draggedFromMap.value === null) {
-    todos.value = todos.value.filter(t => t.id !== dragged.id)
-  } else {
-    const fromMap = maps.value.find(m => m.id === draggedFromMap.value)
-    if (fromMap) {
-      fromMap.todos = fromMap.todos.filter(t => t.id !== dragged.id)
-    }
-  }
-
-  // voeg toe op nieuwe plek
-  todos.value.splice(index, 0, dragged)
-
-  draggedTodo.value = null
-  draggedFromMap.value = null
-
-  saveTodos() // Sla de nieuwe todo lijst op na drop
-}
-
-const saveTodos =() => {
-  axios.post('/api/todos/save', {
-    todos: todos.value,
-    maps: maps.value
-  })
-}
-
-const dropFromMapToList = () => {
-  if (!draggedTodo.value) return
-
-  const fromMap = maps.value.find(m => m.id === draggedFromMap.value)
-  if (fromMap) {
-    fromMap.todos = fromMap.todos.filter(t => t.id !== draggedTodo.value.id)
-  }
-
-  todos.value.push(draggedTodo.value)
-
+const resetDrag = () => {
   draggedTodo.value = null
   draggedFromMap.value = null
 }
