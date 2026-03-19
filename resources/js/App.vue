@@ -180,13 +180,18 @@ const resetDrag = () => {
 </script>
 
 <template>
+
+<transition name="fade">
 <div v-if="saving" class="loading">
   Opslaan...
 </div>
+</transition>
 
+<transition name="fade">
 <div v-if="loading" class="loading">
    Bezig met laden...
 </div>
+</transition>
 
 <div v-else class="layout">
 
