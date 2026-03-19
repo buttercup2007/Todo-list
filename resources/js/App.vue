@@ -167,14 +167,20 @@ const removeFromOldPlace = () => {
   }
 }
 
+// reset drag state
 const resetDrag = () => {
+  if (draggedTodo.value) {
+    draggedTodo.value.dragging = false
+  }
   draggedTodo.value = null
   draggedFromMap.value = null
 }
 </script>
 
 <template>
-<div class="layout">
+<div v-if="loading">Loading...</div>
+
+<div v-else class="layout">
 
   <div class="todo-container">
     <div class="app">
@@ -201,7 +207,7 @@ const resetDrag = () => {
           draggable="true"
           @dragstart="startDrag(todo, $event, null)"
           @dragend="endDrag(todo)"
-          @drop="dropOnList($event, index)"
+          @drop="dropOnList(index)"
           @dragover.prevent
         >
         <label :for="'todo-' + todo.id">
@@ -446,5 +452,11 @@ h1 {
 
 .maps-grid .todo-item {
   margin: 0; /* geen extra margin onder de items */
+}
+
+.loading {
+  text-align: center;
+  font-size: 24px;
+  margin-top: 100px;
 }
 </style>
