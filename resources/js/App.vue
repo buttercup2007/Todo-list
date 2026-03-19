@@ -1,33 +1,50 @@
 <script setup>
-// Importeer ref voor reactieve state van Vue
-import { ref } from 'vue'
 
-// Importeer axios voor API calls
-import axios from "axios";
+import { ref } from 'vue'  // Importeer ref voor reactieve state van Vue
+import axios from "axios";  // Importeer axios voor API calls
+import { onMounted } from 'vue'  // Importeer onMounted voor lifecycle hook
+import { watch } from 'vue'  // Importeer watch voor het automatisch opslaan van wijzigingen
 
-// Input veld voor nieuwe todo
-const newTodo = ref('')
+const newTodo = ref('')  // Input veld voor nieuwe todo
+const newMap = ref('')  // Input veld voor nieuwe map
+const todos = ref([])  // Array met alle todos in de hoofd lijst
+const maps = ref([])  // Array met alle mappen
 
-// Input veld voor nieuwe map
-const newMap = ref('')
+const todoIdCounter = ref(0)  // Unieke ID teller voor todos
+const mapIdCounter = ref(0)  // Unieke ID teller voor mappen
+const draggedTodo = ref(null)  // Huidig getrokken todo (voor drag & drop)
+const draggedFromMap = ref(null)  // Waar de todo vandaan komt (main list of map id)
 
-// Array met alle todos in de hoofd lijst
-const todos = ref([])
+// Watcher om automatisch op te slaan bij wijzigingen in todos of maps
+watch([todos, maps], () => {
+  saveTodos()
+}, { deep: true })
 
-// Array met alle mappen
-const maps = ref([])
+// Laad todos en mappen van de server bij component mount
+const loadTodos = async () => {
+  try {
+    const response = await axios.get('/api/todos')
+    todos.value = response.data.todos || []
+    maps.value = response.data.maps || []
+  } catch (error) {
+    console.error('Laden mislukt', error)
+  }
+}
 
-// Unieke ID teller voor todos
-const todoIdCounter = ref(0)
+onMounted(() => {
+  loadTodos()
+})
 
-// Unieke ID teller voor mappen
-const mapIdCounter = ref(0)
-
-// Huidig getrokken todo (voor drag & drop)
-const draggedTodo = ref(null)
-
-// Waar de todo vandaan komt (main list of map id)
-const draggedFromMap = ref(null)
+const saveTodos = async () => {
+  try {
+    await axios.post('/api/todos/save', {
+      todos: todos.value,
+      maps: maps.value
+    })
+  } catch (error) {
+    console.error('Opslaan mislukt', error)
+  }
+}
 
 // Functie om een nieuwe todo toe te voegen
 const addTodo = () => {
@@ -74,19 +91,28 @@ const removeMap = (id) => {
 // Toggle voltooid status van hoofd todo
 const toggleTodo = (id) => {
   const todo = todos.value.find(t => t.id === id)
-  if (todo) todo.completed = !todo.completed
+  if (todo) {
+    todo.completed = !todo.completed
+    saveTodos() // Sla de nieuwe todo lijst op na toggle
+  }
 }
 
 // Toggle voltooid status van map
 const toggleMap = (id) => {
   const map = maps.value.find(m => m.id === id)
-  if (map) map.completed = !map.completed
+  if (map) {
+   map.completed = !map.completed
+   saveTodos() // Sla de nieuwe map lijst op na toggle
+  }
 }
 
 // Toggle voltooid status van todo in map
 const toggleTodoInMap = (map, todo) => {
   const t = map.todos.find(t => t.id === todo.id)
-  if (t) t.completed = !t.completed
+  if (t) {
+    t.completed = !t.completed
+    saveTodos() // Sla de nieuwe todo lijst op na toggle
+  }
 }
 
 // Start drag: sla de todo op en van waar deze komt
@@ -171,6 +197,20 @@ const saveTodos =() => {
     maps: maps.value
   })
 }
+
+const dropFromMapToList = () => {
+  if (!draggedTodo.value) return
+
+  const fromMap = maps.value.find(m => m.id === draggedFromMap.value)
+  if (fromMap) {
+    fromMap.todos = fromMap.todos.filter(t => t.id !== draggedTodo.value.id)
+  }
+
+  todos.value.push(draggedTodo.value)
+
+  draggedTodo.value = null
+  draggedFromMap.value = null
+}
 </script>
 
 <template>
@@ -214,7 +254,7 @@ const saveTodos =() => {
             name="mapTodoCheckbox"
           />
           </label>
-          
+
           <span class="todo-text">{{ todo.text }}</span>
           <button @click="removeTodo(todo.id)" class="delete-button">x</button>
         </li>
@@ -285,6 +325,8 @@ const saveTodos =() => {
     </div>
   </div>
 </div>
+
+<!--delete button voor slepen task naar map-->
 </template>
 
 <style>
