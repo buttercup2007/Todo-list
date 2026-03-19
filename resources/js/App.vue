@@ -12,7 +12,7 @@ const draggedTodo = ref(null)  // Huidig getrokken todo (voor drag & drop)
 const draggedFromMap = ref(null)  // Waar de todo vandaan komt (main list of map id)
 
 const loading = ref(true)  // Laad status
-consy saving = ref(false)  // Opslaan status
+const saving = ref(false)  // Opslaan status
 
 // Laad todos en mappen van de server bij component mount
 const loadTodos = async () => {
@@ -192,7 +192,7 @@ const resetDrag = () => {
         <button @click="addTodo" class="add-button">Toevoegen</button>
       </div>
 
-      <ul class="todo-list">
+      <ul class="todo-list" @dragover.prevent @drop="dropOnList()">
         <li 
           v-for="(todo, index) in todos"
           :key="todo.id"
@@ -210,7 +210,7 @@ const resetDrag = () => {
             :checked="todo.completed"
             @change="toggleTodo(todo.id)"
             class="todo-checkbox"
-            :id="'map-todo-' + todo.id"
+            :id="'todo-' + todo.id"
             name="mapTodoCheckbox"
           />
           </label>
