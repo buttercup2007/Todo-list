@@ -8,6 +8,8 @@ const newMap = ref('')  // Input veld voor nieuwe map
 const todos = ref([])  // Array met alle todos in de hoofd lijst
 const maps = ref([])  // Array met alle mappen
 
+const todoInput = ref(null)  // Ref voor todo input veld (voor focus na toevoegen)
+
 const draggedTodo = ref(null)  // Huidig getrokken todo (voor drag & drop)
 const draggedFromMap = ref(null)  // Waar de todo vandaan komt (main list of map id)
 
@@ -51,7 +53,7 @@ const saveTodos = () => {
 }
 
 //auto save
-watch([todos, maps], saveTodos, { deep: true }) // watch voor veranderingen in todos en maps
+watch([todos, maps], saveTodos, { deep: true })
 
 // add todo
 const addTodo = () => {
@@ -194,6 +196,7 @@ const resetDrag = () => {
 
       <div class="input-section">
         <input 
+          ref="todoInput"
           v-model="newTodo" 
           @keyup.enter="addTodo"
           placeholder="Voeg een taak toe..."
