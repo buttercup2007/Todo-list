@@ -196,13 +196,17 @@ const resetDrag = () => {
 <template>
   <!-- Overlay voor loading of saving -->
   <transition name="fade">
-    <div v-if="loading || saving" class="loading">
+    <div v-if="loading" class="loading">
       {{ saving ? ' Opslaan...' : 'Bezig met laden...' }}
     </div>
   </transition>
 
   <!-- Hoofd layout -->
-  <div v-show="!loading && !saving" class="layout">
+  <div v-show="!loading" class="layout">
+
+   <div v-if="saving" class="saving-indicator">
+     Opslaan...
+   </div>
 
     <div class="todo-container">
       <div class="app">
@@ -477,6 +481,17 @@ h1 {
   text-align: center;
   font-size: 24px;
   margin-top: 100px;
+}
+
+.saving-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #5bba58;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 </style>
