@@ -3,6 +3,7 @@
 import { ref, onMounted, watch } from 'vue'  // Importeer ref voor reactieve state van Vue
 import axios from "axios";  // Importeer axios voor API calls
 
+
 const newTodo = ref('')  // Input veld voor nieuwe todo
 const newMap = ref('')  // Input veld voor nieuwe map
 const todos = ref([])  // Array met alle todos in de hoofd lijst
@@ -15,6 +16,11 @@ const draggedFromMap = ref(null)  // Waar de todo vandaan komt (main list of map
 
 const loading = ref(true)  // Laad status
 const saving = ref(false)  // Opslaan status
+
+// Verwijder een todo uit een map
+const removeTodoFromMap = (map, id) => {
+  map.todos = map.todos.filter(t => t.id !== id)
+}
 
 // Laad todos en mappen van de server bij component mount
 const loadTodos = async () => {
@@ -293,18 +299,27 @@ const resetDrag = () => {
 
             <ul class="map-todos">
               <li 
-                v-for="todo in map.todos" 
-                :key="todo.id" 
+               v-for="todo in map.todos" 
+               :key="todo.id" 
                 class="todo-item small"
                 draggable="true"
                 @dragstart="startDrag(todo, $event, map.id)"
               >
-                <input
-                  type="checkbox"
-                  :checked="todo.completed"
-                  @change="toggleTodoInMap(map, todo)"
-                  class="todo-checkbox"
-                />
+              <input
+              type="checkbox"
+              :checked="todo.completed"
+              @change="toggleTodoInMap(map, todo)"
+              class="todo-checkbox"
+              />
+
+                <!-- nieuwe delete button-->
+                <button 
+                @click="removeTodoFromMap(map, todo.id)" 
+                class="delete-button small-delete"
+                > x </button>
+                                                
+                
+
                 <span class="todo-text">{{ todo.text }}</span>
               </li>
             </ul>
@@ -483,6 +498,7 @@ h1 {
   margin-top: 100px;
 }
 
+/* saving indicator */
 .saving-indicator {
   position: fixed;
   bottom: 20px;
@@ -494,4 +510,19 @@ h1 {
   font-size: 14px;
 }
 
+/* Kleine delete button voor todos binnen maps */
+.small-delete {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  padding: 0;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todo-item.small {
+  gap: 8px;
+}
 </style>
